@@ -89,16 +89,10 @@ Item {
             return;
         var client = root.clientFor(top);
         var address = client && client.address ? String(client.address) : "";
-        if (address && /^0x[0-9a-fA-F]+$/.test(address)) {
-            // Hyprland's foreign-toplevel activation request does not always
-            // reveal a window on an inactive workspace. focuswindow by the
-            // exact address performs both the workspace switch and focus.
-            Quickshell.execDetached([String(root.manifest.__sourceDir) + "/activate-window", address]);
-        } else {
-            // Keep the protocol-native path as a graceful fallback while
-            // client metadata is refreshing or for non-Hyprland compositors.
-            top.activate();
-        }
+        // Resolve against fresh compositor state in the helper: the metadata
+        // poll can be between updates at the exact moment Enter is pressed.
+        var helper = Quickshell.env("HOME") + "/.config/omarchy/plugins/birdseye.window-overview/activate-window";
+        Quickshell.execDetached([helper, address, String(top.appId || ""), String(top.title || "")]);
         root.dismiss();
     }
 

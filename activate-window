@@ -2,6 +2,16 @@
 set -euo pipefail
 
 address="${1:-}"
+app_id="${2:-}"
+title="${3:-}"
+
+if [[ ! $address =~ ^0x[0-9a-fA-F]+$ ]]; then
+  address=$(hyprctl -j clients | jq -r --arg app "${app_id,,}" --arg title "$title" '
+    [.[] | select(.mapped != false)
+      | select(((.class // "") | ascii_downcase) == $app or ((.initialClass // "") | ascii_downcase) == $app)
+      | select((.title // "") == $title)][0].address // empty')
+fi
+
 [[ $address =~ ^0x[0-9a-fA-F]+$ ]] || exit 2
 
 # Let the layer-shell surface unmap before taking final compositor focus.
