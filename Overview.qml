@@ -108,7 +108,7 @@ Item {
             // Hyprland 0.55+ dispatchers are Lua values. The address comes
             // directly from hyprctl's JSON and is restricted to its hex form.
             if (/^0x[0-9a-fA-F]+$/.test(address))
-                Quickshell.execDetached(["hyprctl", "eval", "hl.dispatch(hl.dsp.focus({ window = 'address:" + address + "' }))"]);
+                Quickshell.execDetached([String(root.manifest.__sourceDir) + "/activate-window", address]);
             else if (top)
                 top.activate();
         } else if (top) {
