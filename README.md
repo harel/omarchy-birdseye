@@ -40,10 +40,10 @@ For local development, clone/copy this repository to a Git URL, then use `omarch
 Add a Hyprland binding to `~/.config/hypr/bindings.lua`:
 
 ```lua
-o.bind("SUPER + TAB", "Bird's Eye", "omarchy-shell birdseye toggle")
+o.bind("SUPER + A", "Bird's Eye", "omarchy-shell birdseye toggle")
 ```
 
-If `SUPER + TAB` already has a binding, call `hl.unbind("SUPER + TAB")` immediately before this line and document what it replaced. Run `hyprctl reload` afterward.
+Choose any unused chord if `SUPER + A` is already bound. Call `hl.unbind(...)` only when intentionally replacing an existing binding, and document what it replaced. Run `hyprctl reload` afterward.
 
 ## Remove
 
