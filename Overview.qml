@@ -260,8 +260,8 @@ Item {
             readonly property bool acceptsKeyboard: {
                 var active = ToplevelManager.activeToplevel;
                 if (!active || !active.screens || !active.screens.length)
-                    return Quickshell.screens[0] === modelData;
-                return active.screens[0] === modelData;
+                    return Quickshell.screens.length > 0 && Quickshell.screens[0].name === modelData.name;
+                return active.screens[0].name === modelData.name;
             }
             WlrLayershell.keyboardFocus: acceptsKeyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             property alias keyboardItem: keyCatcher
