@@ -87,8 +87,18 @@ Item {
     function activate(top) {
         if (!top)
             return;
+        var client = root.clientFor(top);
         root.dismiss();
-        top.activate();
+        if (client && client.address) {
+            // Hyprland's foreign-toplevel activation request does not always
+            // reveal a window on an inactive workspace. focuswindow by the
+            // exact address performs both the workspace switch and focus.
+            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "address:" + String(client.address)]);
+        } else {
+            // Keep the protocol-native path as a graceful fallback while
+            // client metadata is refreshing or for non-Hyprland compositors.
+            top.activate();
+        }
     }
 
     function refreshClients() {
