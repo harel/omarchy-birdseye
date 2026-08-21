@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "birdseye.window-overview",
+  "name": "Bird's Eye",
+  "version": "1.0.0",
+  "author": "Bird's Eye Contributors",
+  "license": "MIT",
+  "description": "A fast, theme-aware overview of every open window and workspace.",
+  "icon": "assets/icon.svg",
+  "preview": "preview.png",
+  "kinds": ["overlay"],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "Overview.qml"
+  }
+}
