@@ -4,4 +4,6 @@ set -euo pipefail
 address="${1:-}"
 [[ $address =~ ^0x[0-9a-fA-F]+$ ]] || exit 2
 
+# Let the layer-shell surface unmap before taking final compositor focus.
+sleep 0.2
 hyprctl eval "hl.dispatch(hl.dsp.focus({ window = 'address:$address' }))" >/dev/null

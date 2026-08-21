@@ -16,8 +16,6 @@ Item {
     property var clients: []
     property int clientsRevision: 0
     property int modelRevision: 0
-    property string pendingActivationAddress: ""
-    property var pendingActivationToplevel: null
     readonly property var allToplevels: ToplevelManager.toplevels ? ToplevelManager.toplevels.values : []
     readonly property var filteredToplevels: {
         var revision = root.modelRevision + root.clientsRevision;
@@ -90,32 +88,18 @@ Item {
         if (!top)
             return;
         var client = root.clientFor(top);
-        root.pendingActivationAddress = client && client.address ? String(client.address) : "";
-        root.pendingActivationToplevel = top;
-        root.dismiss();
-        activationDelay.restart();
-    }
-
-    function finishActivation() {
-        var top = root.pendingActivationToplevel;
-        var address = root.pendingActivationAddress;
-        root.pendingActivationToplevel = null;
-        root.pendingActivationAddress = "";
-        if (address) {
+        var address = client && client.address ? String(client.address) : "";
+        if (address && /^0x[0-9a-fA-F]+$/.test(address)) {
             // Hyprland's foreign-toplevel activation request does not always
             // reveal a window on an inactive workspace. focuswindow by the
             // exact address performs both the workspace switch and focus.
-            // Hyprland 0.55+ dispatchers are Lua values. The address comes
-            // directly from hyprctl's JSON and is restricted to its hex form.
-            if (/^0x[0-9a-fA-F]+$/.test(address))
-                Quickshell.execDetached([String(root.manifest.__sourceDir) + "/activate-window", address]);
-            else if (top)
-                top.activate();
-        } else if (top) {
+            Quickshell.execDetached([String(root.manifest.__sourceDir) + "/activate-window", address]);
+        } else {
             // Keep the protocol-native path as a graceful fallback while
             // client metadata is refreshing or for non-Hyprland compositors.
             top.activate();
         }
+        root.dismiss();
     }
 
     function refreshClients() {
@@ -230,12 +214,6 @@ Item {
         function onActiveToplevelChanged() {
             root.modelRevision++;
         }
-    }
-
-    Timer {
-        id: activationDelay
-        interval: 120
-        onTriggered: root.finishActivation()
     }
 
     Timer {
