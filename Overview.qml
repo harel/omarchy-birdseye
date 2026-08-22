@@ -343,6 +343,11 @@ Item {
                     root.handleKey(event, overviewWindow.columns);
                 }
 
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.dismiss()
+                }
+
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: Style.spacing.panelPadding
@@ -581,7 +586,7 @@ Item {
 
                     Text {
                         Layout.alignment: Qt.AlignHCenter
-                        text: "← ↑ ↓ → navigate   Enter open   Esc close   Click × twice to close a window"
+                        text: "← ↑ ↓ → navigate   Enter open   Esc or click background to close   Click × twice to close a window"
                         textFormat: Text.PlainText
                         color: Color.menu.text
                         opacity: 0.55
