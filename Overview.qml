@@ -322,6 +322,7 @@ Item {
                             spacing: Style.spacing.md
                             Text {
                                 text: "⌕"
+                                textFormat: Text.PlainText
                                 color: Color.menu.text
                                 font.family: Style.font.menuFamily
                                 font.pixelSize: Style.font.heading
@@ -329,6 +330,7 @@ Item {
                             Text {
                                 Layout.fillWidth: true
                                 text: root.filterText || "Type to filter windows…"
+                                textFormat: Text.PlainText
                                 color: Color.menu.text
                                 opacity: root.filterText ? 1 : 0.6
                                 font.family: Style.font.menuFamily
@@ -337,6 +339,7 @@ Item {
                             }
                             Text {
                                 text: root.filteredToplevels.length + " windows"
+                                textFormat: Text.PlainText
                                 color: Color.menu.text
                                 opacity: 0.55
                                 font.family: Style.font.menuFamily
@@ -413,6 +416,7 @@ Item {
                                             Text {
                                                 anchors.centerIn: parent
                                                 text: "Live preview unavailable"
+                                                textFormat: Text.PlainText
                                                 color: Color.menu.text
                                                 opacity: 0.45
                                                 font.family: Style.font.menuFamily
@@ -453,6 +457,7 @@ Item {
                                                 Text {
                                                     Layout.fillWidth: true
                                                     text: card.modelData.title || card.modelData.appId || "Untitled window"
+                                                    textFormat: Text.PlainText
                                                     color: Color.menu.text
                                                     font.family: Style.font.menuFamily
                                                     font.pixelSize: Style.font.body
@@ -462,6 +467,7 @@ Item {
                                                 Text {
                                                     Layout.fillWidth: true
                                                     text: (card.modelData.appId || "Application") + "  ·  " + root.workspaceLabel(card.modelData)
+                                                    textFormat: Text.PlainText
                                                     color: card.focusedWindow ? Color.accent : Color.menu.text
                                                     opacity: card.focusedWindow ? 1 : 0.62
                                                     font.family: Style.font.menuFamily
@@ -483,6 +489,7 @@ Item {
                                                 Text {
                                                     anchors.centerIn: parent
                                                     text: card.closeArmed ? "Close?" : "×"
+                                                    textFormat: Text.PlainText
                                                     color: card.closeArmed ? Color.background : Color.menu.text
                                                     font.family: Style.font.menuFamily
                                                     font.pixelSize: card.closeArmed ? Style.font.caption : Style.font.heading
@@ -522,6 +529,7 @@ Item {
                             anchors.centerIn: parent
                             visible: root.filteredToplevels.length === 0
                             text: root.filterText ? "No matching windows" : "No open windows"
+                            textFormat: Text.PlainText
                             color: Color.menu.text
                             opacity: 0.7
                             font.family: Style.font.menuFamily
@@ -532,6 +540,7 @@ Item {
                     Text {
                         Layout.alignment: Qt.AlignHCenter
                         text: "← ↑ ↓ → navigate   Enter open   Esc close   Click × twice to close a window"
+                        textFormat: Text.PlainText
                         color: Color.menu.text
                         opacity: 0.55
                         font.family: Style.font.menuFamily
