@@ -320,8 +320,8 @@ Item {
             }
             readonly property int columns: Math.max(1, Math.ceil(Math.sqrt(Math.max(1, root.filteredToplevels.length) * width / Math.max(1, height) * 0.72)))
             readonly property int rows: Math.max(1, Math.ceil(Math.max(1, root.filteredToplevels.length) / columns))
-            readonly property real cardWidth: Math.min(Style.space(430), (width - Style.spacing.panelPadding * 2 - Style.spacing.lg * (columns - 1)) / columns)
-            readonly property real cardHeight: Math.min(Style.space(300), (height - Style.space(112) - Style.spacing.lg * (rows - 1)) / rows)
+            readonly property real cardWidth: Math.min(Style.space(600), (width - Style.spacing.panelPadding * 2 - Style.spacing.lg * (columns - 1)) / columns)
+            readonly property real cardHeight: Math.min(Style.space(380), (height - Style.space(112) - Style.spacing.lg * (rows - 1)) / rows)
 
             Rectangle {
                 anchors.fill: parent
@@ -465,12 +465,20 @@ Item {
                                                 font.pixelSize: Style.font.body
                                             }
 
-                                            ScreencopyView {
-                                                anchors.fill: parent
-                                                captureSource: card.modelData
-                                                live: root.opened
-                                                paintCursor: false
-                                                constraintSize: Qt.size(width, height)
+                                            Item {
+                                                anchors.centerIn: parent
+                                                width: parent.width * 2
+                                                height: parent.height * 2
+                                                scale: 0.5
+                                                layer.enabled: true
+                                                layer.smooth: true
+
+                                                ScreencopyView {
+                                                    anchors.fill: parent
+                                                    captureSource: card.modelData
+                                                    live: root.opened
+                                                    paintCursor: false
+                                                }
                                             }
                                         }
 
