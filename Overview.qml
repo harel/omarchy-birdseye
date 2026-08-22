@@ -14,6 +14,8 @@ Item {
     property string filterText: ""
     property int selectedIndex: 0
     property var clients: []
+    property var pendingClients: []
+    property bool clientSnapshotRejected: false
     property int clientsRevision: 0
     property int modelRevision: 0
     readonly property var allToplevels: ToplevelManager.toplevels ? ToplevelManager.toplevels.values : []
@@ -101,16 +103,48 @@ Item {
             clientQuery.running = true;
     }
 
-    function loadClients(raw) {
-        try {
-            var parsed = JSON.parse(raw);
-            root.clients = Array.isArray(parsed) ? parsed.filter(function (c) {
-                return c && c.mapped !== false;
-            }) : [];
-        } catch (e) {
-            root.clients = [];
+    function beginClientSnapshot() {
+        root.pendingClients = [];
+        root.clientSnapshotRejected = false;
+    }
+
+    function addClientLine(rawLine) {
+        var line = String(rawLine || "");
+        if (line.length === 0)
+            return;
+        if (line.length > 16384 || root.pendingClients.length >= 256) {
+            root.clientSnapshotRejected = true;
+            return;
         }
-        root.clientsRevision++;
+        try {
+            var row = JSON.parse(line);
+            if (!row || typeof row !== "object" || typeof row.address !== "string") {
+                root.clientSnapshotRejected = true;
+                return;
+            }
+            var workspace = row.workspace && typeof row.workspace === "object" ? row.workspace : {};
+            root.pendingClients.push({
+                address: String(row.address).slice(0, 32),
+                class: String(row.class || "").slice(0, 512),
+                initialClass: String(row.initialClass || "").slice(0, 512),
+                title: String(row.title || "").slice(0, 512),
+                workspace: {
+                    id: Number(workspace.id) || 0,
+                    name: String(workspace.name || "").slice(0, 128)
+                },
+                monitor: Number(row.monitor) || 0
+            });
+        } catch (e) {
+            root.clientSnapshotRejected = true;
+        }
+    }
+
+    function finishClientSnapshot(exitCode, exitStatus) {
+        if (exitCode === 0 && exitStatus === 0 && !root.clientSnapshotRejected) {
+            root.clients = root.pendingClients.slice();
+            root.clientsRevision++;
+        }
+        root.pendingClients = [];
     }
 
     function normalized(value) {
@@ -211,7 +245,10 @@ Item {
     }
 
     Timer {
-        interval: 700
+        // Toplevel changes refresh immediately above. This slower fallback
+        // catches workspace moves, which the foreign-toplevel protocol does
+        // not expose, without continuously pressuring the shell process.
+        interval: 5000
         repeat: true
         running: root.opened
         triggeredOnStart: true
@@ -220,10 +257,15 @@ Item {
 
     Process {
         id: clientQuery
-        command: ["hyprctl", "-j", "clients"]
-        stdout: StdioCollector {
-            waitForEnd: true
-            onStreamFinished: root.loadClients(text)
+        command: [Quickshell.env("HOME") + "/.config/omarchy/plugins/birdseye.window-overview/list-clients"]
+        onStarted: root.beginClientSnapshot()
+        stdout: SplitParser {
+            onRead: function (line) {
+                root.addClientLine(line);
+            }
+        }
+        onExited: function (exitCode, exitStatus) {
+            root.finishClientSnapshot(exitCode, exitStatus);
         }
     }
 

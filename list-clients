@@ -1,0 +1,25 @@
+#!/bin/bash
+set -euo pipefail
+
+# Keep failures and hostile compositor metadata inside this short-lived helper,
+# not the long-running Omarchy shell. Output is at most 256 bounded NDJSON rows.
+ulimit -v 131072
+
+timeout --signal=TERM --kill-after=1 2 hyprctl -j clients | jq -c '
+  def bounded($n): if type == "string" then .[0:$n] else "" end;
+  limit(256;
+    .[]
+    | select(.mapped != false)
+    | {
+        address: (.address | bounded(32)),
+        class: (.class | bounded(512)),
+        initialClass: (.initialClass | bounded(512)),
+        title: (.title | bounded(512)),
+        workspace: {
+          id: (if (.workspace.id | type) == "number" then .workspace.id else 0 end),
+          name: (.workspace.name | bounded(128))
+        },
+        monitor: (if (.monitor | type) == "number" then .monitor else 0 end)
+      }
+  )
+'
