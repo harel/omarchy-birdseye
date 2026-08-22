@@ -32,7 +32,7 @@ Bird's Eye is a native Omarchy Shell overview for every open Hyprland window. It
 From a published Git repository:
 
 ```sh
-omarchy plugin add https://example.org/your-name/omarchy-birdseye.git --enable
+omarchy plugin add https://github.com/harel/omarchy-birdseye  --enable
 ```
 
 For local development, clone/copy this repository to a Git URL, then use `omarchy plugin add <git-url> --enable`. Omarchy intentionally installs plugins from Git after validating their manifests.
