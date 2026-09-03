@@ -151,6 +151,14 @@ Item {
         return String(value || "").toLowerCase().replace(/\.desktop$/, "");
     }
 
+    function opaqueOver(foreground, background) {
+        var alpha = foreground.a;
+        return Qt.rgba(foreground.r * alpha + background.r * (1 - alpha),
+                       foreground.g * alpha + background.g * (1 - alpha),
+                       foreground.b * alpha + background.b * (1 - alpha),
+                       1);
+    }
+
     function clientFor(top) {
         if (!top)
             return null;
@@ -419,7 +427,9 @@ Item {
                                     width: overviewWindow.cardWidth
                                     height: overviewWindow.cardHeight
                                     radius: Style.cornerRadius
-                                    color: selected ? Color.menu.selectedBackground : Color.menu.background
+                                    color: selected
+                                        ? root.opaqueOver(Color.menu.selectedBackground, Color.menu.background)
+                                        : Color.menu.background
                                     border.color: focusedWindow ? Color.accent : (selected ? Color.menu.selectedText : Color.menu.border)
                                     border.width: focusedWindow ? Math.max(2, Style.selectedBorderWidth) : (selected ? Math.max(2, Style.focusBorderWidth) : Math.max(1, Style.normalBorderWidth))
                                     scale: selected ? 1.018 : 1
@@ -505,7 +515,7 @@ Item {
                                                     Layout.fillWidth: true
                                                     text: card.modelData.title || card.modelData.appId || "Untitled window"
                                                     textFormat: Text.PlainText
-                                                    color: Color.menu.text
+                                                    color: card.selected ? Color.menu.selectedText : Color.menu.text
                                                     font.family: Style.font.menuFamily
                                                     font.pixelSize: Style.font.body
                                                     font.bold: card.selected
