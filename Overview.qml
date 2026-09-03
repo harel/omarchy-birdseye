@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
@@ -18,6 +19,14 @@ Item {
     property bool clientSnapshotRejected: false
     property int clientsRevision: 0
     property int modelRevision: 0
+    property string backgroundMode: "workspace"
+    property int blurStrength: 0
+    property string wallpaperPath: ""
+    readonly property string configPath: Quickshell.env("HOME") + "/.config/omarchy/birdseye.json"
+    readonly property string wallpaperLink: Quickshell.env("HOME") + "/.local/state/omarchy/current/background"
+    readonly property string pluginDir: root.manifest && root.manifest.__sourceDir
+        ? String(root.manifest.__sourceDir)
+        : Quickshell.env("HOME") + "/.config/omarchy/plugins/birdseye.window-overview"
     readonly property var allToplevels: ToplevelManager.toplevels ? ToplevelManager.toplevels.values : []
     readonly property var filteredToplevels: {
         var revision = root.modelRevision + root.clientsRevision;
@@ -35,6 +44,9 @@ Item {
     }
 
     function open(payload) {
+        configFile.reload();
+        if (!wallpaperQuery.running)
+            wallpaperQuery.running = true;
         root.filterText = "";
         root.selectedIndex = Math.max(0, root.filteredToplevels.indexOf(ToplevelManager.activeToplevel));
         root.opened = true;
@@ -77,6 +89,14 @@ Item {
         if (!count)
             return;
         root.selectedIndex = (root.selectedIndex + delta + count) % count;
+    }
+
+    function editConfig() {
+        root.dismiss();
+        Qt.callLater(function() {
+            if (!configEditor.running)
+                configEditor.running = true;
+        });
     }
 
     function moveRow(delta, columns) {
@@ -157,6 +177,25 @@ Item {
                        foreground.g * alpha + background.g * (1 - alpha),
                        foreground.b * alpha + background.b * (1 - alpha),
                        1);
+    }
+
+    function loadConfig(raw) {
+        var mode = "workspace";
+        var strength = 0;
+        try {
+            var parsed = JSON.parse(String(raw || "{}"));
+            if (parsed && parsed.backgroundMode === "desktop")
+                mode = "desktop";
+            if (parsed && parsed.blurStrength !== undefined) {
+                var requested = Number(parsed.blurStrength);
+                if (isFinite(requested))
+                    strength = Math.max(0, Math.min(128, Math.round(requested)));
+            }
+        } catch (e) {
+            console.warn("Bird's Eye: invalid config at " + root.configPath + "; using defaults");
+        }
+        root.backgroundMode = mode;
+        root.blurStrength = strength;
     }
 
     function clientFor(top) {
@@ -277,6 +316,31 @@ Item {
         }
     }
 
+    FileView {
+        id: configFile
+        path: root.configPath
+        watchChanges: true
+        printErrors: false
+        onLoaded: root.loadConfig(text())
+        onLoadFailed: root.loadConfig("{}")
+        onFileChanged: reload()
+    }
+
+    Process {
+        id: wallpaperQuery
+        command: ["readlink", "-f", root.wallpaperLink]
+        running: true
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: root.wallpaperPath = String(text || "").trim()
+        }
+    }
+
+    Process {
+        id: configEditor
+        command: [root.pluginDir + "/open-config"]
+    }
+
     IpcHandler {
         target: "birdseye"
         function open(): string {
@@ -330,10 +394,48 @@ Item {
             readonly property int rows: Math.max(1, Math.ceil(Math.max(1, root.filteredToplevels.length) / columns))
             readonly property real cardWidth: Math.min(Style.space(430), (width - Style.spacing.panelPadding * 2 - Style.spacing.lg * (columns - 1)) / columns)
             readonly property real cardHeight: Math.min(Style.space(300), (height - Style.space(112) - Style.spacing.lg * (rows - 1)) / rows)
+            readonly property bool needsWorkspaceCapture: root.backgroundMode === "workspace" && root.blurStrength > 0
+            readonly property bool backdropReady: !needsWorkspaceCapture || workspaceBackdrop.hasContent
+
+            ScreencopyView {
+                id: workspaceBackdrop
+                anchors.fill: parent
+                captureSource: overviewWindow.modelData
+                live: false
+                paintCursor: false
+                constraintSize: Qt.size(width, height)
+                visible: overviewWindow.needsWorkspaceCapture && hasContent
+                Component.onCompleted: {
+                    if (overviewWindow.needsWorkspaceCapture)
+                        Qt.callLater(captureFrame);
+                }
+            }
+
+            Image {
+                id: desktopBackdrop
+                anchors.fill: parent
+                source: root.backgroundMode === "desktop" && root.wallpaperPath ? Util.fileUrl(root.wallpaperPath) : ""
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: true
+                visible: root.backgroundMode === "desktop" && status === Image.Ready
+            }
+
+            MultiEffect {
+                anchors.fill: parent
+                source: root.backgroundMode === "desktop" ? desktopBackdrop : workspaceBackdrop
+                visible: root.blurStrength > 0
+                    && (root.backgroundMode === "desktop" ? desktopBackdrop.status === Image.Ready : workspaceBackdrop.hasContent)
+                autoPaddingEnabled: false
+                blurEnabled: visible
+                blur: root.blurStrength / 128
+                blurMax: 128
+            }
 
             Rectangle {
                 anchors.fill: parent
                 color: Color.menu.scrim
+                visible: overviewWindow.backdropReady
                 opacity: root.opened ? 1 : 0
                 Behavior on opacity {
                     NumberAnimation {
@@ -345,6 +447,7 @@ Item {
             Item {
                 id: keyCatcher
                 anchors.fill: parent
+                visible: overviewWindow.backdropReady
                 focus: overviewWindow.acceptsKeyboard
                 Keys.priority: Keys.BeforeItem
                 Keys.onPressed: function (event) {
@@ -602,6 +705,39 @@ Item {
                         opacity: 0.55
                         font.family: Style.font.menuFamily
                         font.pixelSize: Style.font.bodySmall
+                    }
+                }
+
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.topMargin: Style.spacing.panelPadding
+                    anchors.rightMargin: Style.spacing.panelPadding
+                    width: Style.space(48)
+                    height: Style.space(48)
+                    radius: Style.cornerRadius
+                    color: configButton.containsMouse ? Color.menu.selectedBackground : Color.menu.background
+                    border.color: configButton.containsMouse ? Color.menu.selectedText : Color.menu.border
+                    border.width: Math.max(1, configButton.containsMouse ? Style.focusBorderWidth : Style.normalBorderWidth)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "⚙"
+                        textFormat: Text.PlainText
+                        color: configButton.containsMouse ? Color.menu.selectedText : Color.menu.text
+                        font.family: Style.font.menuFamily
+                        font.pixelSize: Style.font.heading
+                    }
+
+                    MouseArea {
+                        id: configButton
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: function(mouse) {
+                            mouse.accepted = true;
+                            root.editConfig();
+                        }
                     }
                 }
             }
