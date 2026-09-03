@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "birdseye.window-overview",
   "name": "Bird's Eye",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Harel Malka",
   "license": "MIT",
   "description": "A fast, Gnome-Shell like, theme-aware overview of every open window and workspace.",

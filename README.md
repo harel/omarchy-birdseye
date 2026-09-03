@@ -71,7 +71,36 @@ Mouse users can click a card to activate it. Closing a window requires two click
 
 ## Configuration
 
-The plugin deliberately has no separate color settings: it reads Omarchy's current `Color` and `Style` tokens. Grid dimensions adapt automatically to screen size and window count. The Hyprland shortcut is user configuration and can be changed to any unused combination.
+Bird's Eye reads optional settings from:
+
+```text
+~/.config/omarchy/birdseye.json
+```
+
+Create it from the example bundled with the installed plugin:
+
+```sh
+cp ~/.config/omarchy/plugins/birdseye.window-overview/config.example.json \
+  ~/.config/omarchy/birdseye.json
+```
+
+Alternatively, click the configuration button (`⚙`) in the top-right corner of the Bird's Eye overlay. It creates the file with the defaults when needed and opens it in the editor selected by `omarchy default editor`.
+
+The default configuration is:
+
+```json
+{
+  "backgroundMode": "workspace",
+  "blurStrength": 0
+}
+```
+
+- `backgroundMode` controls what appears behind the tiles. Use `"workspace"` to show a frozen snapshot of the current workspace when blur is enabled (or the live workspace when blur is `0`). Use `"desktop"` to show Omarchy's current wallpaper without the workspace windows.
+- `blurStrength` controls background blur from `0` (off) through `128` (maximum). It applies to either background mode.
+
+The file is watched while Omarchy Shell is running. Saving it updates the configuration automatically; close and reopen Bird's Eye to refresh the captured workspace or wallpaper with the new settings. If plugin code itself is updated, run `omarchy restart shell` to avoid stale QML component caching.
+
+Bird's Eye has no separate color settings: it reads Omarchy's current `Color` and `Style` tokens. Grid dimensions adapt automatically to screen size and window count. The Hyprland shortcut is user configuration and can be changed to any unused combination.
 
 External tools can toggle, open, or close the overview:
 
